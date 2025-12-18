@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Conversor Calendario Nuevo</title>
+  <style>
+    body { font-family: system-ui, Arial; margin: 24px; max-width: 720px; }
+    input, button { padding: 10px; font-size: 16px; }
+    .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+    .card { margin-top: 16px; padding: 16px; border: 1px solid #ddd; border-radius: 10px; }
+    .label { color: #666; font-size: 14px; margin-bottom: 6px; }
+    .value { font-size: 20px; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <h1>Conversor: Gregoriano → Calendario Nuevo</h1>
+
+  <div class="row">
+    <input id="date" type="date" />
+    <button onclick="convert()">Convertir</button>
+  </div>
+
+  <div class="card" id="out" style="display:none;">
+    <div class="label">Calendario nuevo</div>
+    <div class="value" id="newCal"></div>
+    <div class="label" style="margin-top:12px;">Detalle</div>
+    <div id="detail"></div>
+  </div>
+
+<script>
+const months = ["Marzo","Abril","Mayo","Sol","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre","Enero","Febrero"];
+const weekdays = ["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"];
+
+function firstSundayOfMarch(year){
+  // busca el primer domingo entre 1 y 7 de marzo
+  for(let day=1; day<=7; day++){
+    const d = new Date(Date.UTC(year, 2, day)); // mes 2 = marzo (UTC)
+    if(d.getUTCDay() === 0) return d; // 0 = domingo
+  }
+  throw new Error("No se encontró domingo en 1-7 de marzo (imposible).");
+}
+
+function setTodayDefault(){
+  const now = new Date(); // fecha local del dispositivo
+  const y = now.getFullYear();
+  const m = String(now.getMonth()+1).padStart(2,'0');
+  const d = String(now.getDate()).padStart(2,'0');
+  document.getElementById("date").value = `${y}-${m}-${d}`;
+}
+
+function toISODateUTC(d){
+  // d es Date en UTC. devuelve YYYY-MM-DD
+  const y = d.getUTCFullYear();
+  const m = String(d.getUTCMonth()+1).padStart(2,'0');
+  const da = String(d.getUTCDate()).padStart(2,'0');
+  return `${y}-${m}-${da}`;
+}
+
+function parseInputDateToUTC(){
+  const val = document.getElementById("date").value; // YYYY-MM-DD
+  if(!val) return null;
+  const [y,m,d] = val.split("-").map(Number);
+  // Construimos la fecha como "medianoche UTC" del día elegido
+  return new Date(Date.UTC(y, m-1, d));
+}
+
+function convert(){
+  const input = parseInputDateToUTC();
+  if(!input) return;
+
+  const y = input.getUTCFullYear();
+  let anchor = firstSundayOfMarch(y);
+  if(input < anchor){
+    anchor = firstSundayOfMarch(y-1);
+  }
+
+  // delta días respecto al anchor (Marzo 1)
+  const msPerDay = 24*60*60*1000;
+  const delta = Math.floor((input - anchor)/msPerDay);
+
+  let resultText = "";
+  let detailText = `Ancla (Marzo 1): ${toISODateUTC(anchor)} (Domingo)<br/>`;
+
+  if(delta === -1){
+    resultText = "Día 0 (Día Fuera del Tiempo)";
+    detailText += `Fecha gregoriana: ${toISODateUTC(input)}<br/>No tiene día de semana dentro del calendario nuevo.`;
+  } else if(delta >= 0 && delta <= 363){
+    const monthIndex = Math.floor(delta / 28);
+    const dayInMonth = (delta % 28) + 1;
+    const weekday = weekdays[delta % 7];
+
+    resultText = `${months[monthIndex]} ${dayInMonth} (${weekday})`;
+    detailText += `Delta desde ancla: ${delta} días<br/>`;
+    detailText += `Mes #: ${monthIndex+1} de 13<br/>`;
+    detailText += `Día de semana (nuevo): ${weekday}`;
+  } else {
+    resultText = "Fuera de rango (revisa ancla o fecha).";
+    detailText += `Delta: ${delta}`;
+  }
+
+  document.getElementById("newCal").textContent = resultText;
+  document.getElementById("detail").innerHTML = detailText;
+  document.getElementById("out").style.display = "block";
+}
+
+window.addEventListener("DOMContentLoaded", () => {
+  setTodayDefault();
+  convert(); // convierte en automático
+});
+
+</script>
+</body>
+</html>
