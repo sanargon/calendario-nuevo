@@ -92,6 +92,21 @@
         border-radius: 12px;
     }
 
+    /* Resaltado de ventana solar (Apertura/Clímax/Integración) */
+    .dayCell.seasonWindow {
+        outline: 2px dashed rgba(0,0,0,0.12);
+        outline-offset: -3px;
+    }
+
+    .dayCell.climax {
+        outline: 2px solid rgba(0,0,0,0.35);
+        outline-offset: -3px;
+    }
+
+    /* Opcional: tonos distintos por tipo */
+    .dayCell.equinox { box-shadow: 0 0 0 2px rgba(70,130,220,0.18) inset; }
+    .dayCell.solstice { box-shadow: 0 0 0 2px rgba(240,200,70,0.22) inset; }
+
   </style>
 
     <link rel="icon" type="image/png" href="icon.png">
@@ -121,6 +136,114 @@
 <script>
 const months = ["Marzo","Abril","Mayo","Sol","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre","Enero","Febrero"];
 const weekdays = ["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"];
+const WINDOW_DAYS = 3; // 3 antes + clímax + 3 después (7 días)
+
+let CURRENT_MONTH_INDEX = 0;
+let CURRENT_ANCHOR_YEAR = null;
+
+// Fechas gregorianas (local) del CLÍMAX por año.
+// Ajustables cuando quieras (y pueden “bailar” un día según zona horaria).
+const SOLAR_EVENTS = {
+  2025: {
+    springEquinox: "2025-03-20",
+    summerSolstice: "2025-06-21",
+    autumnEquinox: "2025-09-22",
+    winterSolstice: "2025-12-21",
+  },
+  2026: {
+    springEquinox: "2026-03-20",
+    summerSolstice: "2026-06-21",
+    autumnEquinox: "2026-09-22",
+    winterSolstice: "2026-12-21",
+  },
+  2027: {
+    springEquinox: "2027-03-20",
+    summerSolstice: "2027-06-21",
+    autumnEquinox: "2027-09-23",
+    winterSolstice: "2027-12-21",
+  },
+  2028: {
+    springEquinox: "2028-03-20",
+    summerSolstice: "2028-06-20",
+    autumnEquinox: "2028-09-22",
+    winterSolstice: "2028-12-21",
+  },
+  2029: {
+    springEquinox: "2029-03-20",
+    summerSolstice: "2029-06-21",
+    autumnEquinox: "2029-09-22",
+    winterSolstice: "2029-12-21",
+  },
+};
+
+function parseLocalISO(iso){ // "YYYY-MM-DD" a Date local
+  const [y,m,d] = iso.split("-").map(Number);
+  return new Date(y, m-1, d); // local
+}
+
+function daysBetweenLocal(a, b){
+  const msPerDay = 24*60*60*1000;
+  const da = new Date(a.getFullYear(), a.getMonth(), a.getDate());
+  const db = new Date(b.getFullYear(), b.getMonth(), b.getDate());
+  return Math.round((da - db)/msPerDay);
+}
+
+// Dada una fecha local (gregoriana), devuelve {monthIndex, dayInMonth, delta} según tu ancla.
+function gregorianToNewLocal(localDate){
+  const y = localDate.getFullYear();
+  let anchor = firstSundayOfMarch(y);
+  // firstSundayOfMarch usa UTC en tu código; aquí lo convertimos a local equivalente:
+  anchor = new Date(anchor.getUTCFullYear(), anchor.getUTCMonth(), anchor.getUTCDate());
+
+  if(localDate < anchor){
+    let a2 = firstSundayOfMarch(y-1);
+    anchor = new Date(a2.getUTCFullYear(), a2.getUTCMonth(), a2.getUTCDate());
+  }
+
+  const delta = daysBetweenLocal(localDate, anchor);
+  if(delta < 0 || delta > 363) return null;
+
+  const monthIndex = Math.floor(delta / 28);
+  const dayInMonth = (delta % 28) + 1;
+  return { monthIndex, dayInMonth, delta };
+}
+
+// Construye un set de días (1..28) a resaltar para el mes actual, con flags de climax
+function getMonthHighlightsForYear(targetYear, currentMonthIndex){
+  const ev = SOLAR_EVENTS[targetYear];
+  if(!ev) return { windowDays: new Set(), climaxDays: new Set(), typeByDay: {} };
+
+  const events = [
+    { key: "springEquinox", type: "equinox" },
+    { key: "autumnEquinox", type: "equinox" },
+    { key: "summerSolstice", type: "solstice" },
+    { key: "winterSolstice", type: "solstice" },
+  ];
+
+  const windowDays = new Set();
+  const climaxDays = new Set();
+  const typeByDay = {}; // day -> "equinox"|"solstice"
+
+  for(const e of events){
+    const center = parseLocalISO(ev[e.key]);
+    for(let offset = -WINDOW_DAYS; offset <= WINDOW_DAYS; offset++){
+      const d = new Date(center);
+      d.setDate(d.getDate() + offset);
+
+      const mapped = gregorianToNewLocal(d);
+      if(!mapped) continue;
+
+      // solo si cae en el mes que estamos mostrando
+      if(mapped.monthIndex === currentMonthIndex){
+        windowDays.add(mapped.dayInMonth);
+        typeByDay[mapped.dayInMonth] = e.type;
+        if(offset === 0) climaxDays.add(mapped.dayInMonth);
+      }
+    }
+  }
+
+  return { windowDays, climaxDays, typeByDay };
+}
 
 function firstSundayOfMarch(year){
   // busca el primer domingo entre 1 y 7 de marzo
@@ -185,6 +308,9 @@ function convert(){
   const dayInMonth = (delta % 28) + 1;
   const weekday = weekdays[delta % 7];
 
+  CURRENT_MONTH_INDEX = monthIndex;
+  CURRENT_ANCHOR_YEAR = input.getUTCFullYear();
+
   resultText = `${months[monthIndex]} ${dayInMonth} (${weekday})`;
   detailText += `Delta desde ancla: ${delta} días<br/>`;
   detailText += `Mes #: ${monthIndex + 1} de 13<br/>`;
@@ -208,6 +334,11 @@ function convert(){
 }
 
 function renderMonthGrid(activeDayInMonth){
+  const highlights = getMonthHighlightsForYear(
+    CURRENT_ANCHOR_YEAR,
+    CURRENT_MONTH_INDEX
+  );
+
   const container = document.getElementById("monthGrid");
   if(!container) return;
 
@@ -225,6 +356,8 @@ function renderMonthGrid(activeDayInMonth){
   const grid = document.createElement("div");
   grid.className = "grid28";
 
+  // Necesitamos saber qué mes estamos mostrando. Lo más simple: guardarlo globalmente.
+
   for(let d = 1; d <= 28; d++){
   const cell = document.createElement("div");
 
@@ -235,6 +368,15 @@ function renderMonthGrid(activeDayInMonth){
   if(d === activeDayInMonth){
     cell.classList.add("active");
   }
+
+  if (highlights.windowDays.has(d)) {
+  cell.classList.add("seasonWindow");
+  cell.classList.add(highlights.typeByDay[d] || "");
+  }
+
+if (highlights.climaxDays.has(d)) {
+  cell.classList.add("climax");
+}
 
   cell.textContent = d;
   grid.appendChild(cell);
