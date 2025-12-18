@@ -11,11 +11,53 @@
     .card { margin-top: 16px; padding: 16px; border: 1px solid #ddd; border-radius: 10px; }
     .label { color: #666; font-size: 14px; margin-bottom: 6px; }
     .value { font-size: 20px; font-weight: 600; }
+
+    .weekHeader {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 8px;
+        margin-bottom: 8px;
+        font-size: 13px;
+        color: #666;
+    }
+
+    .grid28 {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 8px;
+    }
+
+    .dayCell {
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        padding: 10px 0;
+        text-align: center;
+        font-weight: 600;
+        position: relative;
+        user-select: none;
+    }
+
+    .dayCell.active {
+        box-shadow: 0 0 0 3px rgba(0,0,0,0.12) inset;
+    }
+
+    .dayCell.active::after {
+        content: "";
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        position: absolute;
+        bottom: 8px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #111;
+    }
+
   </style>
 
     <link rel="icon" type="image/png" href="icon.png">
     <link rel="apple-touch-icon" href="icon.png">
-    
+
 </head>
 <body>
   <h1>Conversor: Gregoriano → Calendario Nuevo</h1>
@@ -30,6 +72,12 @@
     <div class="value" id="newCal"></div>
     <div class="label" style="margin-top:12px;">Detalle</div>
     <div id="detail"></div>
+    
+    <div style="margin-top:16px;">
+        <div class="label">Mes (4 semanas)</div>
+        <div id="monthGrid"></div>
+    </div>
+
   </div>
 
 <script>
@@ -86,26 +134,69 @@ function convert(){
   let resultText = "";
   let detailText = `Ancla (Marzo 1): ${toISODateUTC(anchor)} (Domingo)<br/>`;
 
-  if(delta === -1){
-    resultText = "Día 0 (Día Fuera del Tiempo)";
-    detailText += `Fecha gregoriana: ${toISODateUTC(input)}<br/>No tiene día de semana dentro del calendario nuevo.`;
-  } else if(delta >= 0 && delta <= 363){
-    const monthIndex = Math.floor(delta / 28);
-    const dayInMonth = (delta % 28) + 1;
-    const weekday = weekdays[delta % 7];
+  if (delta === -1) {
+  resultText = "Día 0 (Día Fuera del Tiempo)";
+  detailText += `Fecha gregoriana: ${toISODateUTC(input)}<br/>No tiene día de semana dentro del calendario nuevo.`;
 
-    resultText = `${months[monthIndex]} ${dayInMonth} (${weekday})`;
-    detailText += `Delta desde ancla: ${delta} días<br/>`;
-    detailText += `Mes #: ${monthIndex+1} de 13<br/>`;
-    detailText += `Día de semana (nuevo): ${weekday}`;
-  } else {
-    resultText = "Fuera de rango (revisa ancla o fecha).";
-    detailText += `Delta: ${delta}`;
-  }
+  // Día 0: no hay mes, así que ocultamos/limpiamos la cuadrícula
+  const mg = document.getElementById("monthGrid");
+  if (mg) mg.innerHTML = "";
+
+} else if (delta >= 0 && delta <= 363) {
+  const monthIndex = Math.floor(delta / 28);
+  const dayInMonth = (delta % 28) + 1;
+  const weekday = weekdays[delta % 7];
+
+  resultText = `${months[monthIndex]} ${dayInMonth} (${weekday})`;
+  detailText += `Delta desde ancla: ${delta} días<br/>`;
+  detailText += `Mes #: ${monthIndex + 1} de 13<br/>`;
+  detailText += `Día de semana (nuevo): ${weekday}`;
+
+  // Aquí sí dibujamos el mes y marcamos el día
+  renderMonthGrid(dayInMonth);
+
+} else {
+  resultText = "Fuera de rango (revisa ancla o fecha).";
+  detailText += `Delta: ${delta}`;
+
+  // Si por alguna razón cae fuera de rango, también limpia la cuadrícula
+  const mg = document.getElementById("monthGrid");
+  if (mg) mg.innerHTML = "";
+}
 
   document.getElementById("newCal").textContent = resultText;
   document.getElementById("detail").innerHTML = detailText;
   document.getElementById("out").style.display = "block";
+}
+
+function renderMonthGrid(activeDayInMonth){
+  const container = document.getElementById("monthGrid");
+  if(!container) return;
+
+  // Encabezado de días (como tu hoja)
+  const header = document.createElement("div");
+  header.className = "weekHeader";
+  const labels = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+  labels.forEach(l => {
+    const el = document.createElement("div");
+    el.textContent = l;
+    header.appendChild(el);
+  });
+
+  // Grid 1–28
+  const grid = document.createElement("div");
+  grid.className = "grid28";
+
+  for(let d=1; d<=28; d++){
+    const cell = document.createElement("div");
+    cell.className = "dayCell" + (d === activeDayInMonth ? " active" : "");
+    cell.textContent = d;
+    grid.appendChild(cell);
+  }
+
+  container.innerHTML = "";
+  container.appendChild(header);
+  container.appendChild(grid);
 }
 
 window.addEventListener("DOMContentLoaded", () => {
