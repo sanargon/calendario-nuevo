@@ -5,6 +5,16 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Conversor Calendario Nuevo</title>
   <style>
+    :root {
+        --accent: #2f6f5f;      /* verde sobrio */
+        --accent-soft: #e6f2ef; /* verde muy claro */
+        --accent-strong: #1f4d42;
+    }
+
+    h1 {
+        color: var(--accent-strong);
+    }
+
     body { font-family: system-ui, Arial; margin: 24px; max-width: 720px; }
     input, button { padding: 10px; font-size: 16px; }
     .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
@@ -38,7 +48,9 @@
     }
 
     .dayCell.active {
-        box-shadow: 0 0 0 3px rgba(0,0,0,0.12) inset;
+        background: var(--accent-soft);
+        box-shadow: 0 0 0 2px var(--accent) inset;
+        color: var(--accent-strong);
     }
 
     .dayCell.active::after {
@@ -50,7 +62,32 @@
         bottom: 8px;
         left: 50%;
         transform: translateX(-50%);
-        background: #111;
+        background: var(--accent);
+    }
+
+    /* Colores suaves por semana */
+    .week-1 {
+        background: rgba(220, 60, 60, 0.10);   /* rojo suave */
+    }
+
+    .week-2 {
+        background: rgba(255, 255, 255, 0.8); /* blanco / neutro */
+    }
+
+    .week-3 {
+        background: rgba(70, 130, 220, 0.12); /* azul suave */
+    }
+
+    .week-4 {
+        background: rgba(240, 200, 70, 0.18); /* amarillo suave */
+    }
+
+    /* Para que el color se vea como banda */
+    .week-1,
+    .week-2,
+    .week-3,
+    .week-4 {
+        border-radius: 12px;
     }
 
   </style>
@@ -58,8 +95,7 @@
     <link rel="icon" type="image/png" href="icon.png">
     <link rel="apple-touch-icon" href="icon.png">
 
-</head>
-<body>
+</head><body>
   <h1>Conversor: Gregoriano → Calendario Nuevo</h1>
 
   <div class="row">
@@ -187,12 +223,20 @@ function renderMonthGrid(activeDayInMonth){
   const grid = document.createElement("div");
   grid.className = "grid28";
 
-  for(let d=1; d<=28; d++){
-    const cell = document.createElement("div");
-    cell.className = "dayCell" + (d === activeDayInMonth ? " active" : "");
-    cell.textContent = d;
-    grid.appendChild(cell);
+  for(let d = 1; d <= 28; d++){
+  const cell = document.createElement("div");
+
+  const weekIndex = Math.floor((d - 1) / 7) + 1; // 1 a 4
+  cell.classList.add("dayCell");
+  cell.classList.add(`week-${weekIndex}`);
+
+  if(d === activeDayInMonth){
+    cell.classList.add("active");
   }
+
+  cell.textContent = d;
+  grid.appendChild(cell);
+}
 
   container.innerHTML = "";
   container.appendChild(header);
