@@ -112,9 +112,8 @@
       position:absolute;
       left:10px;
       right:10px;
-      top:50%;
+      top:10px;
       height:4px;
-      transform:translateY(-50%);
       border-radius:999px;
       opacity:0.75;
       z-index:0;
@@ -125,8 +124,9 @@
       z-index:1;
       display:inline-block;
       width:100%;
+      margin-top: 14px;
     }
-    .meso-apertura   { background: rgba(47, 111, 95, 0.45); }
+    .meso-apertura   { background: rgba(60, 170, 120, 0.85); }
     .meso-desarrollo { background: rgba(70, 130, 220, 0.45); }
     .meso-evaluacion { background: rgba(240, 180, 70, 0.55); }
     .meso-cierre     { background: rgba(120, 120, 120, 0.40); }
@@ -170,7 +170,7 @@
       margin-right:6px;
       vertical-align:middle;
     }
-    .lg-apertura{background:rgba(47,111,95,0.45);}
+    .lg-apertura{background:rgba(60, 170, 120, 0.85);}
     .lg-desarrollo{background:rgba(70,130,220,0.45);}
     .lg-evaluacion{background:rgba(240,180,70,0.55);}
     .lg-cierre{background:rgba(120,120,120,0.40);}
@@ -451,7 +451,7 @@ const TRANSITIONS = {
     },
     climax: {
       working: "Claridad sobre el final de una forma.",
-      statement: "Se vuelve evidente que algo no puede continuar.nLa comprensión se impone.",
+      statement: "Se vuelve evidente que algo no puede continuar.\nLa comprensión se impone.",
       funcion: "Claridad evaluativa",
       specQs: [
         "¿Qué identidad o narrativa personal se está cerrando aquí?",
@@ -673,6 +673,100 @@ function parseInputDateToUTC(){
   return new Date(Date.UTC(y, m-1, d));
 }
 
+function startOfDay(dt){
+  return new Date(dt.getFullYear(), dt.getMonth(), dt.getDate());
+}
+function addDaysLocal(dt, n){
+  const d = startOfDay(dt);
+  d.setDate(d.getDate() + n);
+  return d;
+}
+function daysDiff(a, b){
+  const ms = 24*60*60*1000;
+  return Math.round((startOfDay(a) - startOfDay(b)) / ms);
+}
+
+function buildEventListAround(year){
+  const ys = [year-1, year, year+1];
+  const out = [];
+  for(const y of ys){
+    const ev = SOLAR_EVENTS[y];
+    if(!ev) continue;
+    out.push({ key:"springEquinox",  name:"Equinoccio de Primavera",  date: parseLocalISO(ev.springEquinox)  });
+    out.push({ key:"summerSolstice", name:"Solsticio de Verano",      date: parseLocalISO(ev.summerSolstice) });
+    out.push({ key:"autumnEquinox",  name:"Equinoccio de Otoño",      date: parseLocalISO(ev.autumnEquinox)  });
+    out.push({ key:"winterSolstice", name:"Solsticio de Invierno",    date: parseLocalISO(ev.winterSolstice) });
+  }
+  out.sort((a,b)=>a.date-b.date);
+  return out;
+}
+
+function seasonKeyFromEventKey(evKey){
+  return { springEquinox:"primavera", summerSolstice:"verano", autumnEquinox:"otono", winterSolstice:"invierno" }[evKey];
+}
+function transKeyFromEventKey(evKey){
+  return { springEquinox:"invierno->primavera", summerSolstice:"primavera->verano", autumnEquinox:"verano->otono", winterSolstice:"otono->invierno" }[evKey];
+}
+
+// Motor astronómico: Etapa 1–3 fijas (21) y Etapa 4 variable hasta el siguiente clímax.
+function getAstroStateForDate(selectedLocalDate){
+  const d = startOfDay(selectedLocalDate);
+  const events = buildEventListAround(d.getFullYear());
+  if(events.length < 4) return { error:true, message:"Faltan SOLAR_EVENTS para calcular eventos." };
+
+  let nextIdx = events.findIndex(e => startOfDay(e.date) >= d);
+  if(nextIdx === -1) nextIdx = events.length - 1;
+  const nextEvent = events[nextIdx];
+  const prevEvent = events[nextIdx - 1] || events[events.length - 1];
+
+  // Transición = cualquier evento ±3 (iniciación/clímax/integración)
+let closest = null;
+for (const e of events) {
+  const diff = daysDiff(d, e.date); // d - e.date
+  if (diff >= -3 && diff <= 3) {
+    closest = { event: e, diff };
+    break;
+  }
+}
+
+if (closest) {
+  const diff = closest.diff;
+  const mode = diff < 0 ? "iniciacion" : (diff === 0 ? "climax" : "integracion");
+  return {
+    isTransition: true,
+    mode,
+    eventName: closest.event.name,
+    transKey: transKeyFromEventKey(closest.event.key),
+  };
+}
+
+  const seasonKey = seasonKeyFromEventKey(prevEvent.key);
+
+  const stage1Start = addDaysLocal(prevEvent.date, 4);
+  const stage1End   = addDaysLocal(stage1Start, 20);
+
+  const stage2Start = addDaysLocal(stage1Start, 21);
+  const stage2End   = addDaysLocal(stage2Start, 20);
+
+  const stage3Start = addDaysLocal(stage1Start, 42);
+  const stage3End   = addDaysLocal(stage3Start, 20);
+
+  const stage4Start = addDaysLocal(stage1Start, 63);
+  const stage4End   = addDaysLocal(nextEvent.date, -4);
+
+  let mesoKey = "cierre";
+  if(d >= stage1Start && d <= stage1End) mesoKey = "apertura";
+  else if(d >= stage2Start && d <= stage2End) mesoKey = "desarrollo";
+  else if(d >= stage3Start && d <= stage3End) mesoKey = "evaluacion";
+  else if(d >= stage4Start && d <= stage4End) mesoKey = "cierre";
+
+  return { isTransition:false, seasonKey, mesoKey, nextEventName: nextEvent.name };
+}
+
+function getCellDateFromDayDelta(anchorLocalDate, dayDelta){
+  return addDaysLocal(anchorLocalDate, dayDelta);
+}
+
 function convert(){
   const input = parseInputDateToUTC();
   if(!input) return;
@@ -715,15 +809,20 @@ function convert(){
   detailText += `Día de semana (nuevo): ${weekday}`;
 
   // Aquí sí dibujamos el mes y marcamos el día
-  renderMonthGrid(dayInMonth);
-  const dayDelta = (monthIndex * 28) + (dayInMonth - 1);
-  const tInfo = getTransitionInfo(dayDelta, CURRENT_ANCHOR_YEAR);
+  const anchorLocal = new Date(anchor.getUTCFullYear(), anchor.getUTCMonth(), anchor.getUTCDate());
+  const selectedLocal = new Date(input.getUTCFullYear(), input.getUTCMonth(), input.getUTCDate());
 
-if (tInfo.isTransition) {
-  renderTransitionPanel(dayDelta, tInfo);
-} else {
-  renderStandardPanel(dayDelta, dayInMonth, CURRENT_ANCHOR_YEAR);
-}
+  renderMonthGrid(dayInMonth, anchorLocal);
+
+  const astro = getAstroStateForDate(selectedLocal);
+
+  if (astro.error) {
+    document.getElementById("contextPanel").innerHTML = `<div class="sub">${astro.message}</div>`;
+  } else if (astro.isTransition) {
+    renderTransitionPanelAstro(astro);
+  } else {
+    renderStandardPanelAstro(astro, dayInMonth);
+  }
 
   document.getElementById("out").style.display = "block";
 
@@ -741,16 +840,12 @@ if (tInfo.isTransition) {
   document.getElementById("out").style.display = "block";
 }
 
-function renderMonthGrid(activeDayInMonth){
-  const highlights = getMonthHighlightsForYear(
-    CURRENT_ANCHOR_YEAR,
-    CURRENT_MONTH_INDEX
-  );
+function renderMonthGrid(activeDayInMonth, anchorLocal){
+  const highlights = getMonthHighlightsForYear(CURRENT_ANCHOR_YEAR, CURRENT_MONTH_INDEX);
 
   const container = document.getElementById("monthGrid");
   if(!container) return;
 
-  // Encabezado de días
   const header = document.createElement("div");
   header.className = "weekHeader";
   const labels = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
@@ -760,33 +855,25 @@ function renderMonthGrid(activeDayInMonth){
     header.appendChild(el);
   });
 
-  // Grid 1–28
   const grid = document.createElement("div");
   grid.className = "grid28";
 
   for(let d = 1; d <= 28; d++){
     const cell = document.createElement("div");
 
-    // Microciclo por semana (colores)
-    const weekIndex = Math.floor((d - 1) / 7) + 1; // 1..4
+    const weekIndex = Math.floor((d - 1) / 7) + 1;
     cell.classList.add("dayCell", `week-${weekIndex}`);
 
-    // DayDelta absoluto del año (0..363) para este día del mes actual
     const dayDeltaCell = (CURRENT_MONTH_INDEX * 28) + (d - 1);
+    const cellDate = getCellDateFromDayDelta(anchorLocal, dayDeltaCell);
+    const astroCell = getAstroStateForDate(cellDate);
 
-    // Si estamos en transición (±3/clímax/+3), NO dibujamos línea mesociclo
-    const tInfoCell = getTransitionInfo(dayDeltaCell, CURRENT_ANCHOR_YEAR);
-
-    if (!tInfoCell.isTransition) {
-      const mesoKey = getMesoStageKey(dayDeltaCell); // "apertura" | "desarrollo" | "evaluacion" | "cierre" | null
-      if (mesoKey) {
-        const line = document.createElement("div");
-        line.classList.add("mesoLine", `meso-${mesoKey}`);
-        cell.appendChild(line);
-      }
+    if (!astroCell.error && !astroCell.isTransition) {
+      const line = document.createElement("div");
+      line.classList.add("mesoLine", `meso-${astroCell.mesoKey}`);
+      cell.appendChild(line);
     }
 
-    // Resaltados solares (tu lógica existente)
     if (highlights.windowDays.has(d)) {
       cell.classList.add("seasonWindow");
       cell.classList.add(highlights.typeByDay[d] || "");
@@ -795,12 +882,10 @@ function renderMonthGrid(activeDayInMonth){
       cell.classList.add("climax");
     }
 
-    // Día activo
     if(d === activeDayInMonth){
       cell.classList.add("active");
     }
 
-    // Número del día (arriba)
     const num = document.createElement("span");
     num.className = "dayNum";
     num.textContent = d;
@@ -965,6 +1050,93 @@ function renderTransitionPanel(dayDelta, tInfo){
     <ul>${specQs}</ul>
 
     <div class="emp">${phase.emp || ""}</div>
+  `;
+}
+
+function renderStandardPanelAstro(astro, dayInMonth){
+  const ctx = document.getElementById("contextPanel");
+  if(!ctx) return;
+
+  const seasonKey = astro.seasonKey;
+  const macro = MACRO[seasonKey];
+
+  const mesoKey = astro.mesoKey;
+  const mesoUni = MESO_UNIVERSAL[mesoKey];
+  const mesoSpec = MESO_ESPECIFICO[seasonKey][mesoKey];
+  const mesoCombined = `${mesoUni.phrase} ${mesoSpec}`;
+
+  const microWeek = Math.floor((dayInMonth - 1) / 7) + 1;
+  const micro = MICRO[microWeek];
+  const microQs = micro.qs.map(q=>`<li>${q}</li>`).join("");
+
+  ctx.innerHTML = `
+    <div class="k">[MacroCiclo] ${macro.title}</div>
+    <div class="sub"><b>Qué se está trabajando:</b><br>${macro.working}</div>
+    <div class="sub" style="margin-top:8px;"><b>Frase macrociclo:</b><br>${macro.phrase}</div>
+
+    <div class="k" style="margin-top:18px;">[MesoCiclo] ${mesoUni.label}</div>
+    <div class="sub" style="margin-top:6px;">${mesoCombined}</div>
+    <div class="sub" style="margin-top:10px;"><b>Pregunta guía:</b><br>${mesoUni.question}</div>
+    <div class="sub" style="margin-top:10px;"><b>Qué ocurre:</b><br>${mesoUni.occurs}</div>
+
+    <div class="k" style="margin-top:18px;">[MicroCiclo] ${micro.label}</div>
+    <div class="sub" style="margin-top:6px;"><b>Frase microciclo:</b><br>${micro.phrase}</div>
+    <div class="sub" style="margin-top:10px;"><b>Preguntas clave:</b></div>
+    <ul>${microQs}</ul>
+
+    <div class="sub" style="margin-top:12px; font-size:12px; color:#555;">
+      Próximo clímax astronómico: <b>${astro.nextEventName || ""}</b>
+    </div>
+  `;
+}
+
+function renderTransitionPanelAstro(astro){
+  const ctx = document.getElementById("contextPanel");
+  if(!ctx) return;
+
+  const t = TRANSITIONS[astro.transKey];
+  const mode = astro.mode;
+  const phase = t[mode];
+
+  const univQs = TRANS_UNIV[mode].map(q=>`<li>${q}</li>`).join("");
+  const specQs = phase.specQs.map(q=>`<li>${q}</li>`).join("");
+
+  let headerHtml = "";
+  if(mode === "climax"){
+    headerHtml = `<div class="k">Clímax — ${astro.eventName}</div>`;
+  } else if(mode === "integracion"){
+    const toKey = getToSeasonKey(astro.transKey);
+    headerHtml = `<div class="k">Inicio de ${toKey.charAt(0).toUpperCase() + toKey.slice(1)}</div>`;
+  } else {
+    headerHtml = `
+      <div class="k">${t.header}</div>
+      <div class="sub">${t.descriptor}</div>
+      <div class="sub" style="margin-top:10px;"><b>Sentido del cruce</b><br>${t.sentido.replace(/\n/g,"<br>")}</div>
+    `;
+  }
+
+  const workingText = (mode === "climax") ? (phase.working || "") : (t.workOfTo || "");
+  const workingBlock = `<div class="sub" style="margin-top:12px;"><b>Qué se está trabajando:</b><br>${workingText}</div>`;
+
+  const phaseTitle = (mode === "climax")
+    ? ""
+    : `<div class="k" style="margin-top:18px;">${mode === "iniciacion" ? "Iniciación" : "Integración"}</div>`;
+
+  ctx.innerHTML = `
+    ${headerHtml}
+    ${workingBlock}
+    ${phaseTitle}
+
+    <div class="sub" style="margin-top:8px;">${phase.statement.replace(/\n/g,"<br>")}</div>
+    <div class="sub" style="margin-top:10px;"><b>Función:</b><br>${phase.funcion}</div>
+
+    <div class="sub" style="margin-top:14px;"><b>Preguntas (Universales):</b></div>
+    <ul>${univQs}</ul>
+
+    <div class="sub" style="margin-top:10px;"><b>Preguntas (Específicas del cruce):</b></div>
+    <ul>${specQs}</ul>
+
+    <div class="emp">${phase.emp}</div>
   `;
 }
 
