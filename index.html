@@ -175,6 +175,31 @@
     .lg-evaluacion{background:rgba(240,180,70,0.55);}
     .lg-cierre{background:rgba(120,120,120,0.40);}
 
+    .upcoming{
+      margin-top: 16px;
+      padding: 12px;
+      border: 1px dashed rgba(0,0,0,0.15);
+      border-radius: 12px;
+      background: rgba(0,0,0,0.02);
+    }
+    .upcoming.small{
+      margin-top: 12px;
+      padding: 10px;
+      background: rgba(0,0,0,0.015);
+    }
+    .upcoming .t{
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+    .upcoming .s{
+      font-weight: 700;
+      color: #1f4d42;
+    }
+    .upcoming .p{
+      margin-top: 4px;
+      color: #444;
+    }
+
   </style>
 
     <link rel="icon" type="image/png" href="icon.png">
@@ -296,6 +321,14 @@ const MICRO = {
     "¿Qué se sostiene para el siguiente mes?",
     "¿Qué dejo ir sin culpa?"
   ]}
+};
+
+const UPCOMING = {
+  astro: {
+    title: "[Próximamente]",
+    subtitle: "Mañana inicia el cruce de estación",
+    phrase: "Se abre un umbral. Observa: algo importante se reordena."
+  }
 };
 
 // Preguntas universales por subfase (transición)
@@ -767,6 +800,102 @@ function getCellDateFromDayDelta(anchorLocalDate, dayDelta){
   return addDaysLocal(anchorLocalDate, dayDelta);
 }
 
+function mesoLabel(key){
+  return {
+    apertura: "Apertura",
+    desarrollo: "Desarrollo",
+    evaluacion: "Evaluación",
+    cierre: "Cierre"
+  }[key] || key;
+}
+
+function microWeekFromDayInMonth(dayInMonth){
+  return Math.floor((dayInMonth - 1) / 7) + 1; // 1..4
+}
+
+function isSaturdayNew(dayInMonth){
+  // Semana inicia domingo: 7,14,21,28 son sábado
+  return dayInMonth % 7 === 0;
+}
+
+// Decide qué mostrar en “Próximamente” (macro/meso) y (micro)
+function getUpcoming(selectedLocal, dayInMonth){
+  const tomorrow = addDaysLocal(selectedLocal, 1);
+
+  const astroTomorrow = getAstroStateForDate(tomorrow);
+  const astroToday = getAstroStateForDate(selectedLocal);
+
+  // 1) Prioridad máxima: mañana inicia cruce astronómico (iniciación)
+  // Es decir: mañana ya es transición y está en modo "iniciacion"
+  let primary = null;
+
+  if (!astroTomorrow.error && astroTomorrow.isTransition && astroTomorrow.mode === "iniciacion") {
+    primary = {
+      type: "astro",
+      line1: UPCOMING.astro.subtitle,
+      line2: UPCOMING.astro.phrase
+    };
+  } else {
+    // 2) Cambio de etapa mesociclo (solo si mañana cambia mesoKey y ambos días NO están en transición)
+    if (!astroToday.error && !astroTomorrow.error &&
+        !astroToday.isTransition && !astroTomorrow.isTransition &&
+        astroToday.mesoKey && astroTomorrow.mesoKey &&
+        astroToday.mesoKey !== astroTomorrow.mesoKey) {
+
+      primary = {
+        type: "meso",
+        title: "[Próximamente]",
+        line1: `${mesoLabel(astroToday.mesoKey)} → ${mesoLabel(astroTomorrow.mesoKey)}`,
+        line2: MESO_UNIVERSAL[astroTomorrow.mesoKey]?.phrase || ""
+      };
+    }
+  }
+
+  // 3) Microciclo: todos los sábados (mañana inicia semana nueva)
+  let micro = null;
+  if (isSaturdayNew(dayInMonth)) {
+    const current = microWeekFromDayInMonth(dayInMonth);
+    const next = (current % 4) + 1; // 4->1
+    micro = {
+      title: "[Microciclo]",
+      line1: `Mañana: ${MICRO[next].label}`,
+      line2: MICRO[next].phrase
+    };
+  }
+
+  return { primary, micro };
+}
+
+function renderUpcomingBlock(selectedLocal, dayInMonth){
+  const u = getUpcoming(selectedLocal, dayInMonth);
+
+  // Si no hay nada que mostrar, no renderiza
+  if (!u.primary && !u.micro) return "";
+
+  let html = `<div class="upcoming"><div class="t">[Próximamente]</div>`;
+
+  if (u.primary) {
+    html += `
+      
+      <div class="s">${u.primary.line1}</div>
+      <div class="p">${u.primary.line2}</div>
+    `;
+  }
+
+  if (u.micro) {
+    html += `
+      <div class="upcoming small">
+        <div class="t">${u.micro.title}</div>
+        <div class="s">${u.micro.line1}</div>
+        <div class="p">${u.micro.line2}</div>
+      </div>
+    `;
+  }
+
+  html += `</div>`;
+  return html;
+}
+
 function convert(){
   const input = parseInputDateToUTC();
   if(!input) return;
@@ -816,13 +945,11 @@ function convert(){
 
   const astro = getAstroStateForDate(selectedLocal);
 
-  if (astro.error) {
-    document.getElementById("contextPanel").innerHTML = `<div class="sub">${astro.message}</div>`;
-  } else if (astro.isTransition) {
-    renderTransitionPanelAstro(astro);
-  } else {
-    renderStandardPanelAstro(astro, dayInMonth);
-  }
+  if (astro.isTransition) {
+  renderTransitionPanelAstro(astro, selectedLocal, dayInMonth);
+} else {
+  renderStandardPanelAstro(astro, dayInMonth, selectedLocal);
+}
 
   document.getElementById("out").style.display = "block";
 
@@ -1053,7 +1180,7 @@ function renderTransitionPanel(dayDelta, tInfo){
   `;
 }
 
-function renderStandardPanelAstro(astro, dayInMonth){
+function renderStandardPanelAstro(astro, dayInMonth, selectedLocal){
   const ctx = document.getElementById("contextPanel");
   if(!ctx) return;
 
@@ -1083,11 +1210,13 @@ function renderStandardPanelAstro(astro, dayInMonth){
     <div class="sub" style="margin-top:6px;"><b>Frase microciclo:</b><br>${micro.phrase}</div>
     <div class="sub" style="margin-top:10px;"><b>Preguntas clave:</b></div>
     <ul>${microQs}</ul>
-    
+
+    ${renderUpcomingBlock(selectedLocal, dayInMonth)}
+
   `;
 }
 
-function renderTransitionPanelAstro(astro){
+function renderTransitionPanelAstro(astro, selectedLocal, dayInMonth){
   const ctx = document.getElementById("contextPanel");
   if(!ctx) return;
 
@@ -1134,6 +1263,7 @@ function renderTransitionPanelAstro(astro){
     <ul>${specQs}</ul>
 
     <div class="emp">${phase.emp}</div>
+    ${renderUpcomingBlock(selectedLocal, dayInMonth)}
   `;
 }
 
