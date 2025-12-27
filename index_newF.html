@@ -107,6 +107,7 @@
     .dayCell.equinox { box-shadow: 0 0 0 2px rgba(70,130,220,0.18) inset; }
     .dayCell.solstice { box-shadow: 0 0 0 2px rgba(240,200,70,0.22) inset; }
 
+  
     /* ===== Mesociclo line behind each day ===== */
     .mesoLine{
       position:absolute;
@@ -154,27 +155,6 @@
       font-weight:700;
     }
 
-    #mesoLegend{
-      margin-top:12px;
-      font-size:12px;
-      color:#555;
-      display:flex;
-      gap:14px;
-      flex-wrap:wrap;
-    }
-    #mesoLegend .lg{
-      display:inline-block;
-      width:18px;
-      height:4px;
-      border-radius:99px;
-      margin-right:6px;
-      vertical-align:middle;
-    }
-    .lg-apertura{background:rgba(47,111,95,0.45);}
-    .lg-desarrollo{background:rgba(70,130,220,0.45);}
-    .lg-evaluacion{background:rgba(240,180,70,0.55);}
-    .lg-cierre{background:rgba(120,120,120,0.40);}
-
   </style>
 
     <link rel="icon" type="image/png" href="icon.png">
@@ -199,15 +179,9 @@
         <div id="monthGrid"></div>
     </div>
 
-    <div id="mesoLegend">
-      <span><i class="lg lg-apertura"></i> Etapa 1: Apertura</span>
-      <span><i class="lg lg-desarrollo"></i> Etapa 2: Desarrollo</span>
-      <span><i class="lg lg-evaluacion"></i> Etapa 3: Evaluación</span>
-      <span><i class="lg lg-cierre"></i> Etapa 4: Cierre</span>
-    </div>
+    <div id="contextPanel" style="margin-top:18px;"></div>
 
-  <div id="contextPanel" style="margin-top:18px;"></div>
-  </div>
+  </div
 
 <script>
 const months = ["Marzo","Abril","Mayo","Sol","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre","Enero","Febrero"];
@@ -216,7 +190,6 @@ const WINDOW_DAYS = 3; // 3 antes + clímax + 3 después (7 días)
 
 let CURRENT_MONTH_INDEX = 0;
 let CURRENT_ANCHOR_YEAR = null;
-
 // ===== Modelo textual (macro/meso/micro + transiciones) =====
 const MACRO = {
   primavera: {
@@ -321,7 +294,8 @@ const TRANSITIONS = {
   "invierno->primavera": {
     header: "❄️ → 🌱 Invierno → Primavera",
     descriptor: "(Disolución → Reestructuración activa)",
-    sentido: "Dejar de ser lo que ya no sostiene\npara comenzar a vivir de otra manera.",
+    sentido: "Dejar de ser lo que ya no sostiene
+para comenzar a vivir de otra manera.",
     event: "Equinoccio de Primavera",
     workOfTo: MACRO.primavera.working,
     iniciacion: {
@@ -359,12 +333,14 @@ const TRANSITIONS = {
   "primavera->verano": {
     header: "🌱 → ☀️ Primavera → Verano",
     descriptor: "(Reestructuración activa → Potenciación y Exposición)",
-    sentido: "Pasar de construir nuevas formas\na ponerlas a prueba en la realidad.",
+    sentido: "Pasar de construir nuevas formas
+a ponerlas a prueba en la realidad.",
     event: "Solsticio de Verano",
     workOfTo: MACRO.verano.working,
     iniciacion: {
       working: MACRO.verano.working,
-      statement: "Se percibe un aumento de demanda.\nLa estructura empieza a recibir más carga.",
+      statement: "Se percibe un aumento de demanda.
+La estructura empieza a recibir más carga.",
       funcion: "Estrés de la estructura",
       specQs: [
         "¿Qué nueva forma estoy listo para poner a prueba?",
@@ -375,7 +351,8 @@ const TRANSITIONS = {
     },
     climax: {
       working: "Máxima exposición y prueba de coherencia.",
-      statement: "La exigencia es máxima.\nTodo queda expuesto.",
+      statement: "La exigencia es máxima.
+Todo queda expuesto.",
       funcion: "Test de resistencia",
       specQs: [
         "¿Qué estructura realmente se sostiene?",
@@ -385,7 +362,8 @@ const TRANSITIONS = {
     },
     integracion: {
       working: "Regulación de energía, ritmo y foco.",
-      statement: "Se ajusta la forma de operar para no romperse.\nSe aprende a dosificar.",
+      statement: "Se ajusta la forma de operar para no romperse.
+Se aprende a dosificar.",
       funcion: "Optimización",
       specQs: [
         "¿Qué necesito regular para sostener este nivel?",
@@ -397,12 +375,14 @@ const TRANSITIONS = {
   "verano->otono": {
     header: "☀️ → 🍂 Verano → Otoño",
     descriptor: "(Potenciación y Exposición → Evaluación y Selección)",
-    sentido: "Pasar de la máxima exposición\na quedarnos con lo que realmente vale la pena sostener.",
+    sentido: "Pasar de la máxima exposición
+a quedarnos con lo que realmente vale la pena sostener.",
     event: "Equinoccio de Otoño",
     workOfTo: MACRO.otono.working,
     iniciacion: {
       working: MACRO.otono.working,
-      statement: "Se percibe pérdida de eficiencia.\nLa energía empieza a rendir menos.",
+      statement: "Se percibe pérdida de eficiencia.
+La energía empieza a rendir menos.",
       funcion: "Estrés de la estructura",
       specQs: [
         "¿Qué ya no vale la energía que le estoy dando?",
@@ -413,7 +393,8 @@ const TRANSITIONS = {
     },
     climax: {
       working: "Resistencia real de la estructura.",
-      statement: "Se vuelve claro qué no compensa sostener.\nLa realidad marca el límite.",
+      statement: "Se vuelve claro qué no compensa sostener.
+La realidad marca el límite.",
       funcion: "Test de la resistencia",
       specQs: [
         "¿Qué estructura no va a pasar al siguiente ciclo?",
@@ -423,7 +404,8 @@ const TRANSITIONS = {
     },
     integracion: {
       working: "Optimización consciente de la estructura.",
-      statement: "Se suelta lo innecesario.\nLa forma se vuelve más eficiente.",
+      statement: "Se suelta lo innecesario.
+La forma se vuelve más eficiente.",
       funcion: "Optimización",
       specQs: [
         "¿Qué puedo optimizar sin perder coherencia?",
@@ -435,12 +417,14 @@ const TRANSITIONS = {
   "otono->invierno": {
     header: "🍂 → ❄️ Otoño → Invierno",
     descriptor: "(Evaluación y Selección → Disolución y Redefinición)",
-    sentido: "Aceptar que algo terminó su ciclo\ny permitir que caiga sin resistencia.",
+    sentido: "Aceptar que algo terminó su ciclo
+y permitir que caiga sin resistencia.",
     event: "Solsticio de Invierno",
     workOfTo: MACRO.invierno.working,
     iniciacion: {
       working: MACRO.invierno.working,
-      statement: "Se percibe desgaste profundo.\nLo que antes se sostenía ahora pesa más de lo que aporta.",
+      statement: "Se percibe desgaste profundo.
+Lo que antes se sostenía ahora pesa más de lo que aporta.",
       funcion: "Detección de desgaste",
       specQs: [
         "¿Qué ya sé que no va a sobrevivir este ciclo?",
@@ -451,7 +435,8 @@ const TRANSITIONS = {
     },
     climax: {
       working: "Claridad sobre el final de una forma.",
-      statement: "Se vuelve evidente que algo no puede continuar.nLa comprensión se impone.",
+      statement: "Se vuelve evidente que algo no puede continuar.
+La comprensión se impone.",
       funcion: "Claridad evaluativa",
       specQs: [
         "¿Qué identidad o narrativa personal se está cerrando aquí?",
@@ -461,7 +446,8 @@ const TRANSITIONS = {
     },
     integracion: {
       working: "Preparación interna para la disolución.",
-      statement: "Se empieza a soltar sin forzar.\nLa estructura se debilita de forma consciente.",
+      statement: "Se empieza a soltar sin forzar.
+La estructura se debilita de forma consciente.",
       funcion: "Preparación para el colapso necesario",
       specQs: [
         "¿Qué puedo permitir que caiga sin intervenir?",
@@ -471,6 +457,7 @@ const TRANSITIONS = {
     }
   }
 };
+
 
 // Fechas gregorianas (local) del CLÍMAX por año.
 // Ajustables cuando quieras (y pueden “bailar” un día según zona horaria).
@@ -537,70 +524,6 @@ function gregorianToNewLocal(localDate){
   const monthIndex = Math.floor(delta / 28);
   const dayInMonth = (delta % 28) + 1;
   return { monthIndex, dayInMonth, delta };
-}
-
-function mod(n, m){ return ((n % m) + m) % m; }
-
-// Convierte fecha ISO "YYYY-MM-DD" (local) a dayDelta (0..363)
-function isoToDayDelta(iso){
-  const d = parseLocalISO(iso);
-  const mapped = gregorianToNewLocal(d);
-  return mapped ? mapped.delta : null;
-}
-
-// Devuelve el evento (clímax) en dayDelta para el año actual
-function getEventDelta(year, eventKey){
-  const ev = SOLAR_EVENTS[year];
-  if(!ev) return null;
-  return isoToDayDelta(ev[eventKey]);
-}
-
-// Devuelve info de transición si dayDelta cae en ventana [-3..+3] de algún evento
-function getTransitionInfo(dayDelta, year){
-  const events = [
-    { key:"springEquinox",  name:"Equinoccio de Primavera",  transKey:"invierno->primavera" },
-    { key:"summerSolstice", name:"Solsticio de Verano",      transKey:"primavera->verano" },
-    { key:"autumnEquinox",  name:"Equinoccio de Otoño",      transKey:"verano->otono" },
-    { key:"winterSolstice", name:"Solsticio de Invierno",    transKey:"otono->invierno" },
-  ];
-
-  for(const e of events){
-    const evDelta = getEventDelta(year, e.key);
-    if (evDelta === null) continue;
-
-    // diferencia directa y ventana [-3..+3]
-    const raw = dayDelta - evDelta;
-
-    if (raw >= -3 && raw <= 3) {
-      const mode = raw < 0 ? "iniciacion" : (raw === 0 ? "climax" : "integracion");
-      return { isTransition:true, transKey:e.transKey, eventName:e.name, offset:raw, mode };
-    }
-  }
-  return { isTransition:false };
-}
-
-// Inicios reales de estación (después de integración): evento + 4
-function getSeasonStartsForYear(year){
-  const spring = mod(getEventDelta(year,"springEquinox")  + 4, 364);
-  const summer = mod(getEventDelta(year,"summerSolstice") + 4, 364);
-  const autumn = mod(getEventDelta(year,"autumnEquinox")  + 4, 364);
-  const winter = mod(getEventDelta(year,"winterSolstice") + 4, 364);
-
-  return [
-    { key:"primavera", start:spring },
-    { key:"verano",    start:summer },
-    { key:"otono",     start:autumn },
-    { key:"invierno",  start:winter },
-  ].sort((a,b)=>a.start-b.start);
-}
-
-function getSeasonByStarts(dayDelta, starts){
-  let idx = -1;
-  for(let i=0;i<starts.length;i++){
-    if(dayDelta >= starts[i].start) idx = i;
-  }
-  if(idx === -1) idx = starts.length - 1;
-  return starts[idx];
 }
 
 // Construye un set de días (1..28) a resaltar para el mes actual, con flags de climax
@@ -700,14 +623,13 @@ function convert(){
 
   const cp = document.getElementById("contextPanel");
   if (cp) cp.innerHTML = "";
-
 } else if (delta >= 0 && delta <= 363) {
   const monthIndex = Math.floor(delta / 28);
   const dayInMonth = (delta % 28) + 1;
   const weekday = weekdays[delta % 7];
 
   CURRENT_MONTH_INDEX = monthIndex;
-  CURRENT_ANCHOR_YEAR = input.getFullYear();
+  CURRENT_ANCHOR_YEAR = input.getUTCFullYear();
 
   resultText = `${months[monthIndex]} ${dayInMonth} (${weekday})`;
   detailText += `Delta desde ancla: ${delta} días<br/>`;
@@ -717,15 +639,11 @@ function convert(){
   // Aquí sí dibujamos el mes y marcamos el día
   renderMonthGrid(dayInMonth);
   const dayDelta = (monthIndex * 28) + (dayInMonth - 1);
-  const tInfo = getTransitionInfo(dayDelta, CURRENT_ANCHOR_YEAR);
-
-if (tInfo.isTransition) {
-  renderTransitionPanel(dayDelta, tInfo);
-} else {
-  renderStandardPanel(dayDelta, dayInMonth, CURRENT_ANCHOR_YEAR);
-}
-
-  document.getElementById("out").style.display = "block";
+  if (isTransitionWeek(dayDelta)) {
+    renderTransitionPanel(dayDelta);
+  } else {
+    renderStandardPanel(dayDelta, dayInMonth);
+  }
 
 } else {
   resultText = "Fuera de rango (revisa ancla o fecha).";
@@ -750,7 +668,7 @@ function renderMonthGrid(activeDayInMonth){
   const container = document.getElementById("monthGrid");
   if(!container) return;
 
-  // Encabezado de días
+  // Encabezado de días (como tu hoja)
   const header = document.createElement("div");
   header.className = "weekHeader";
   const labels = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
@@ -764,50 +682,41 @@ function renderMonthGrid(activeDayInMonth){
   const grid = document.createElement("div");
   grid.className = "grid28";
 
+  // Necesitamos saber qué mes estamos mostrando. Lo más simple: guardarlo globalmente.
+
   for(let d = 1; d <= 28; d++){
-    const cell = document.createElement("div");
+  const cell = document.createElement("div");
 
-    // Microciclo por semana (colores)
-    const weekIndex = Math.floor((d - 1) / 7) + 1; // 1..4
-    cell.classList.add("dayCell", `week-${weekIndex}`);
+  const weekIndex = Math.floor((d - 1) / 7) + 1; // 1 a 4
+  cell.classList.add("dayCell");
+  cell.classList.add(`week-${weekIndex}`);
 
-    // DayDelta absoluto del año (0..363) para este día del mes actual
-    const dayDeltaCell = (CURRENT_MONTH_INDEX * 28) + (d - 1);
-
-    // Si estamos en transición (±3/clímax/+3), NO dibujamos línea mesociclo
-    const tInfoCell = getTransitionInfo(dayDeltaCell, CURRENT_ANCHOR_YEAR);
-
-    if (!tInfoCell.isTransition) {
-      const mesoKey = getMesoStageKey(dayDeltaCell); // "apertura" | "desarrollo" | "evaluacion" | "cierre" | null
-      if (mesoKey) {
-        const line = document.createElement("div");
-        line.classList.add("mesoLine", `meso-${mesoKey}`);
-        cell.appendChild(line);
-      }
-    }
-
-    // Resaltados solares (tu lógica existente)
-    if (highlights.windowDays.has(d)) {
-      cell.classList.add("seasonWindow");
-      cell.classList.add(highlights.typeByDay[d] || "");
-    }
-    if (highlights.climaxDays.has(d)) {
-      cell.classList.add("climax");
-    }
-
-    // Día activo
-    if(d === activeDayInMonth){
-      cell.classList.add("active");
-    }
-
-    // Número del día (arriba)
-    const num = document.createElement("span");
-    num.className = "dayNum";
-    num.textContent = d;
-    cell.appendChild(num);
-
-    grid.appendChild(cell);
+  if(d === activeDayInMonth){
+    cell.classList.add("active");
   }
+
+  if (highlights.windowDays.has(d)) {
+  cell.classList.add("seasonWindow");
+  cell.classList.add(highlights.typeByDay[d] || "");
+  }
+
+if (highlights.climaxDays.has(d)) {
+  cell.classList.add("climax");
+}
+
+  const dayDeltaCell = (CURRENT_MONTH_INDEX * 28) + (d - 1);
+  const mesoKey = getMesoStageKey(dayDeltaCell);
+  if (mesoKey) {
+    const line = document.createElement("div");
+    line.classList.add("mesoLine", `meso-${mesoKey}`);
+    cell.appendChild(line);
+  }
+  const num = document.createElement("span");
+  num.className = "dayNum";
+  num.textContent = d;
+  cell.appendChild(num);
+  grid.appendChild(cell);
+}
 
   container.innerHTML = "";
   container.appendChild(header);
@@ -847,22 +756,15 @@ function getMicroWeek(dayInMonth){
   return Math.floor((dayInMonth - 1) / 7) + 1; // 1..4
 }
 
-function renderStandardPanel(dayDelta, dayInMonth, year){
+function renderStandardPanel(dayDelta, dayInMonth){
   const ctx = document.getElementById("contextPanel");
   if(!ctx) return;
 
-  const starts = getSeasonStartsForYear(year);
-  const season = getSeasonByStarts(dayDelta, starts);
-  const seasonKey = season.key;
+  const seasonIdx = getSeasonIndex(dayDelta);
+  const seasonKey = getSeasonKeyByIndex(seasonIdx);
   const macro = MACRO[seasonKey];
 
   const mesoKey = getMesoStageKey(dayDelta);
-
-if (!mesoKey) {
-  ctx.innerHTML = ""; 
-  return;
-}
-
   const mesoUni = MESO_UNIVERSAL[mesoKey];
   const mesoSpec = MESO_ESPECIFICO[seasonKey][mesoKey];
   const mesoCombined = `${mesoUni.phrase} ${mesoSpec}`;
@@ -888,65 +790,53 @@ if (!mesoKey) {
   `;
 }
 
-function getToSeasonKey(transKey){
-  const map = {
-    "invierno->primavera":"primavera",
-    "primavera->verano":"verano",
-    "verano->otono":"otono",
-    "otono->invierno":"invierno"
-  };
-  return map[transKey];
-}
-
-function renderTransitionPanel(dayDelta, tInfo){
+function renderTransitionPanel(dayDelta){
   const ctx = document.getElementById("contextPanel");
   if(!ctx) return;
 
-  const key = tInfo.transKey;        // "otono->invierno", etc.
+  const fromIdx = getSeasonIndex(dayDelta);
+  const key = getTransitionKey(fromIdx);
   const t = TRANSITIONS[key];
-  const mode = tInfo.mode;           // "iniciacion" | "climax" | "integracion"
+  const dis = getDayInSeason(dayDelta);
+  const offset = dis - 84; // 0..6
+
+  let mode = "iniciacion";
+  if(offset === 3) mode = "climax";
+  else if(offset >= 4) mode = "integracion";
+
   const phase = t[mode];
 
-  const univQs = (mode === "iniciacion"
-      ? TRANS_UNIV.iniciacion
-      : (mode === "climax" ? TRANS_UNIV.climax : TRANS_UNIV.integracion)
-    )
-    .map(q => `<li>${q}</li>`)
-    .join("");
+  const univQs = (mode === "iniciacion" ? TRANS_UNIV.iniciacion : mode === "climax" ? TRANS_UNIV.climax : TRANS_UNIV.integracion)
+    .map(q=>`<li>${q}</li>`).join("");
+  const specQs = phase.specQs.map(q=>`<li>${q}</li>`).join("");
 
-  const specQs = (phase.specQs || [])
-    .map(q => `<li>${q}</li>`)
-    .join("");
-
-  // Header según especificación
+  // Header rules per your spec
   let headerHtml = "";
   if(mode === "climax"){
-    headerHtml = `<div class="k">Clímax — ${tInfo.eventName || t.event}</div>`;
+    headerHtml = `<div class="k">Clímax — ${t.event}</div>`;
   } else if(mode === "integracion"){
-    const toKey = getToSeasonKey(tInfo.transKey);
+    const toKey = getSeasonKeyByIndex((fromIdx + 1) % 4);
     headerHtml = `<div class="k">Inicio de ${toKey.charAt(0).toUpperCase() + toKey.slice(1)}</div>`;
   } else {
     headerHtml = `
       <div class="k">${t.header}</div>
       <div class="sub">${t.descriptor}</div>
-      <div class="sub" style="margin-top:10px;"><b>Sentido del cruce</b><br>${(t.sentido || "").replace(/\n/g,"<br>")}</div>
+      <div class="sub" style="margin-top:10px;"><b>Sentido del cruce</b><br>${t.sentido.replace(/
+/g,"<br>")}</div>
     `;
   }
 
-  // Qué se está trabajando (en iniciación + integración usa workOfTo; en clímax usa phase.working si existe)
-  let workingText = "";
-  if(mode === "climax"){
-    workingText = phase.working || t.workOfTo || "";
+  // For initiation/integration we show "Qué se está trabajando" using to-season working list
+  let workingBlock = "";
+  if(mode !== "climax"){
+    workingBlock = `<div class="sub" style="margin-top:12px;"><b>Qué se está trabajando:</b><br>${t.workOfTo}</div>`;
   } else {
-    workingText = t.workOfTo || "";
+    workingBlock = `<div class="sub" style="margin-top:12px;"><b>Qué se está trabajando:</b><br>${phase.working}</div>`;
   }
 
-  const workingBlock = workingText
-    ? `<div class="sub" style="margin-top:12px;"><b>Qué se está trabajando:</b><br>${workingText}</div>`
-    : "";
-
   const title = mode === "iniciacion" ? "Iniciación" : (mode === "integracion" ? "Integración" : "");
-  const phaseTitle = (mode === "climax")
+
+  const phaseTitle = mode === "climax"
     ? ""
     : `<div class="k" style="margin-top:18px;">${title}</div>`;
 
@@ -955,8 +845,9 @@ function renderTransitionPanel(dayDelta, tInfo){
     ${workingBlock}
 
     ${phaseTitle}
-    <div class="sub" style="margin-top:8px;">${(phase.statement || "").replace(/\n/g,"<br>")}</div>
-    <div class="sub" style="margin-top:10px;"><b>Función:</b><br>${phase.funcion || ""}</div>
+    <div class="sub" style="margin-top:8px;">${phase.statement.replace(/
+/g,"<br>")}</div>
+    <div class="sub" style="margin-top:10px;"><b>Función:</b><br>${phase.funcion}</div>
 
     <div class="sub" style="margin-top:14px;"><b>Preguntas (Universales):</b></div>
     <ul>${univQs}</ul>
@@ -964,7 +855,7 @@ function renderTransitionPanel(dayDelta, tInfo){
     <div class="sub" style="margin-top:10px;"><b>Preguntas (Específicas del cruce):</b></div>
     <ul>${specQs}</ul>
 
-    <div class="emp">${phase.emp || ""}</div>
+    <div class="emp">${phase.emp}</div>
   `;
 }
 
@@ -972,7 +863,6 @@ window.addEventListener("DOMContentLoaded", () => {
   setTodayDefault();
   convert(); // convierte en automático
 });
-
 </script>
 </body>
 </html>
