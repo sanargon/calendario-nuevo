@@ -200,6 +200,40 @@
       color: #444;
     }
 
+    #contextPanel .titleLine{
+      color: #111;          /* color base del bloque */
+    }
+
+    #contextPanel .titleLine > b{
+      color: #0b3d91;       /* azul fuerte (protagonista) */
+      font-weight: 900;
+    }
+
+    /* Solo los títulos protagonistas (macro/meso/micro) */
+    #contextPanel .titleLine > b{
+      font-weight: 900;
+    }
+
+    /* Primavera */
+    #contextPanel .titleLine.season-primavera > b{
+      color: #1f6f5f; /* verde */
+    }
+
+    /* Verano */
+    #contextPanel .titleLine.season-verano > b{
+      color: #c97c1d; /* naranja */
+    }
+
+    /* Otoño */
+    #contextPanel .titleLine.season-otono > b{
+      color: #7a4a21; /* café */
+    }
+
+    /* Invierno */
+    #contextPanel .titleLine.season-invierno > b{
+      color: #0b3d91; /* azul */
+    }
+
   </style>
 
     <link rel="icon" type="image/png" href="icon.png">
@@ -1084,16 +1118,16 @@ if (!mesoKey) {
   const microQs = micro.qs.map(q => `<li>${q}</li>`).join("");
 
   ctx.innerHTML = `
-    <div class="k">[MacroCiclo] ${macro.title}</div>
+    <div class="sub titleLine"><b>${macro.title}</b></div>
     <div class="sub"><b>Qué se está trabajando:</b><br>${macro.working}</div>
     <div class="sub" style="margin-top:8px;"><b>Frase macrociclo:</b><br>${macro.phrase}</div>
 
-    <div class="k" style="margin-top:18px;">[MesoCiclo] ${mesoUni.label}</div>
+    <div class="sub titleLine"><b>${mesoUni.label}</b></div>
     <div class="sub" style="margin-top:6px;">${mesoCombined}</div>
     <div class="sub" style="margin-top:10px;"><b>Pregunta guía:</b><br>${mesoUni.question}</div>
     <div class="sub" style="margin-top:10px;"><b>Qué ocurre:</b><br>${mesoUni.occurs}</div>
 
-    <div class="k" style="margin-top:18px;">[MicroCiclo] ${micro.label}</div>
+    <div class="sub titleLine"><b>${micro.label}</b></div>
     <div class="sub" style="margin-top:6px;"><b>Frase microciclo:</b><br>${micro.phrase}</div>
     <div class="sub" style="margin-top:10px;"><b>Preguntas clave:</b></div>
     <ul>${microQs}</ul>
@@ -1197,16 +1231,19 @@ function renderStandardPanelAstro(astro, dayInMonth, selectedLocal){
   const microQs = micro.qs.map(q=>`<li>${q}</li>`).join("");
 
   ctx.innerHTML = `
-    <div class="k">[MacroCiclo] ${macro.title}</div>
+    <div class="k">[MacroCiclo]</div>
+    <div class="sub titleLine season-${seasonKey}"><b>${macro.title}</b></div>
     <div class="sub"><b>Qué se está trabajando:</b><br>${macro.working}</div>
     <div class="sub" style="margin-top:8px;"><b>Frase macrociclo:</b><br>${macro.phrase}</div>
 
-    <div class="k" style="margin-top:18px;">[MesoCiclo] ${mesoUni.label}</div>
+    <div class="k" style="margin-top:18px;">[MesoCiclo]</div>
+    <div class="sub titleLine season-${seasonKey}"><b>${mesoUni.label}</b></div>
     <div class="sub" style="margin-top:6px;">${mesoCombined}</div>
     <div class="sub" style="margin-top:10px;"><b>Pregunta guía:</b><br>${mesoUni.question}</div>
     <div class="sub" style="margin-top:10px;"><b>Qué ocurre:</b><br>${mesoUni.occurs}</div>
 
-    <div class="k" style="margin-top:18px;">[MicroCiclo] ${micro.label}</div>
+    <div class="k" style="margin-top:18px;">[MicroCiclo]</div>
+    <div class="sub titleLine season-${seasonKey}"><b>${micro.label}</b></div>
     <div class="sub" style="margin-top:6px;"><b>Frase microciclo:</b><br>${micro.phrase}</div>
     <div class="sub" style="margin-top:10px;"><b>Preguntas clave:</b></div>
     <ul>${microQs}</ul>
