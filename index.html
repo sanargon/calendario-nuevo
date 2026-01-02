@@ -116,20 +116,19 @@
       height:4px;
       border-radius:999px;
       opacity:0.75;
-      z-index:0;
+      z-index:1;
       pointer-events:none;
     }
     .dayCell > span.dayNum{
       position:relative;
-      z-index:1;
+      z-index:2;
       display:inline-block;
       width:100%;
       margin-top: 14px;
     }
-    .meso-apertura   { background: rgba(60, 170, 120, 0.85); }
-    .meso-desarrollo { background: rgba(70, 130, 220, 0.45); }
-    .meso-evaluacion { background: rgba(240, 180, 70, 0.55); }
-    .meso-cierre     { background: rgba(120, 120, 120, 0.40); }
+    .meso-cardinal { background: rgba(220, 60, 60, 0.70); }     /* Rojo */
+    .meso-fijo     { background: rgba(20, 110, 120, 0.70); }    /* Azul verdoso */
+    .meso-mutable  { background: rgba(140, 70, 200, 0.65); }    /* Violeta */
 
     /* Context panel typography */
     #contextPanel h2{
@@ -170,10 +169,9 @@
       margin-right:6px;
       vertical-align:middle;
     }
-    .lg-apertura{background:rgba(60, 170, 120, 0.85);}
-    .lg-desarrollo{background:rgba(70,130,220,0.45);}
-    .lg-evaluacion{background:rgba(240,180,70,0.55);}
-    .lg-cierre{background:rgba(120,120,120,0.40);}
+    .lg-cardinal{background:rgba(220, 60, 60, 0.70);}
+    .lg-fijo{background:rgba(20, 110, 120, 0.70);}
+    .lg-mutable{background:rgba(140, 70, 200, 0.65);}
 
     .upcoming{
       margin-top: 16px;
@@ -234,6 +232,24 @@
       color: #0b3d91; /* azul */
     }
 
+    #contextPanel .titleLine.mesoTitle.meso-cardinal > b { color: rgb(220,60,60); }
+    #contextPanel .titleLine.mesoTitle.meso-fijo > b     { color: rgb(20,110,120); }
+    #contextPanel .titleLine.mesoTitle.meso-mutable > b  { color: rgb(140,70,200); }
+
+    /* Quitar franja (background) SOLO en el título del mesociclo */
+    #contextPanel .mesoTitle.meso-cardinal,
+    #contextPanel .mesoTitle.meso-fijo,
+    #contextPanel .mesoTitle.meso-mutable{
+      background: transparent !important;
+      padding: 0 !important;
+      border-radius: 0 !important;
+}
+
+/* Colores del texto del título del mesociclo */
+#contextPanel .mesoTitle.meso-cardinal > b { color: rgb(220, 60, 60) !important; } /* rojo */
+#contextPanel .mesoTitle.meso-fijo     > b { color: rgb(20, 110, 120) !important; } /* azul verdoso */
+#contextPanel .mesoTitle.meso-mutable  > b { color: rgb(140, 70, 200) !important; } /* violeta */
+
   </style>
 
     <link rel="icon" type="image/png" href="icon.png">
@@ -259,10 +275,9 @@
     </div>
 
     <div id="mesoLegend">
-      <span><i class="lg lg-apertura"></i> Etapa 1: Apertura</span>
-      <span><i class="lg lg-desarrollo"></i> Etapa 2: Desarrollo</span>
-      <span><i class="lg lg-evaluacion"></i> Etapa 3: Evaluación</span>
-      <span><i class="lg lg-cierre"></i> Etapa 4: Cierre</span>
+      <span><i class="lg lg-cardinal"></i> Cardinal</span>
+      <span><i class="lg lg-fijo"></i> Fijo</span>
+      <span><i class="lg lg-mutable"></i> Mutable</span>
     </div>
 
   <div id="contextPanel" style="margin-top:18px;"></div>
@@ -301,37 +316,287 @@ const MACRO = {
 };
 
 const MESO_UNIVERSAL = {
-  apertura: {
-    label: "ETAPA 1 — APERTURA",
-    question: "¿Qué empieza a moverse aquí?",
-    occurs: "Inicio de movimiento, apertura de una nueva dirección, es iniciación pero a nivel estacional.",
-    phrase: "Se abre una nueva dirección."
+  cardinal: {
+    label: "CARDINAL",
+    sentido: "Inicio del movimiento. Decisión. Dirección.",
+    texto: "La energía se pone en marcha. Algo comienza y pide dirección consciente.",
+    preguntas: [
+      "¿Qué decisión inaugura este ciclo?",
+      "¿Desde dónde estoy iniciando: claridad o reacción?"
+    ]
   },
-  desarrollo: {
-    label: "ETAPA 2 — DESARROLLO",
-    question: "¿Qué se está expresando en este proceso?",
-    occurs: "Despliegue activo. Aquí ocurre la “vida” del proceso.",
-    phrase: "El proceso toma forma en lo real."
+  fijo: {
+    label: "FIJO",
+    sentido: "Sostener. Consolidar. Atravesar fricción.",
+    texto: "La energía se estabiliza y se pone a prueba. Sostener revela qué es real.",
+    preguntas: [
+      "¿Qué requiere constancia?",
+      "¿Dónde aparece fricción o resistencia?"
+    ]
   },
-  evaluacion: {
-    label: "ETAPA 3 — EVALUACIÓN",
-    question: "¿Esto está cumpliendo su función?",
-    occurs: "Lectura consciente del sistema.",
-    phrase: "El sistema puede leerse con claridad."
+  mutable: {
+    label: "MUTABLE",
+    sentido: "Ajuste. Aprendizaje. Preparación del cambio.",
+    texto: "La energía se flexibiliza. Aprender es preparar el siguiente umbral.",
+    preguntas: [
+      "¿Qué necesita ajustarse?",
+      "¿Qué aprendizaje emerge?"
+    ]
+  }
+};
+
+// ===== Meso ontológico: Cardinal / Fijo / Mutable (Universal + por estación) =====
+const MESO_MODAL_UNI = {
+  cardinal: {
+    label: "CARDINAL",
+    sentido: "Inicio del movimiento. Decisión. Dirección.",
+    texto: "La energía se pone en marcha. Algo comienza y pide dirección consciente.",
+    qs: [
+      "¿Qué decisión inaugura este ciclo?",
+      "¿Desde dónde estoy iniciando: claridad o reacción?",
+      "¿Qué dirección empiezo a caminar?"
+    ]
   },
-  cierre: {
-    label: "ETAPA 4 — CIERRE",
-    question: "¿Qué se integra y qué se suelta?",
-    occurs: "Liberación y transición, integración y preparación del siguiente ciclo. El cierre no es Invierno: es el final de cada estación.",
-    phrase: "Se consolida lo esencial y se prepara el siguiente ciclo."
+  fijo: {
+    label: "FIJO",
+    sentido: "Sostener. Consolidar. Atravesar fricción.",
+    texto: "La energía se estabiliza y se pone a prueba. Sostener revela qué es real.",
+    qs: [
+      "¿Qué requiere constancia?",
+      "¿Dónde aparece fricción o resistencia?",
+      "¿Qué estoy sosteniendo por inercia y qué por elección?"
+    ]
+  },
+  mutable: {
+    label: "MUTABLE",
+    sentido: "Ajuste. Aprendizaje. Preparación del cambio.",
+    texto: "La energía se flexibiliza. Aprender es preparar el siguiente umbral.",
+    qs: [
+      "¿Qué necesita ajustarse?",
+      "¿Qué aprendizaje emerge?",
+      "¿Qué estoy listo para soltar?"
+    ]
+  }
+};
+
+const MESO_MODAL_SEASON = {
+  invierno: {
+    cardinal: {
+      enfoque: "Inicio desde el vacío. Reestructuración interna.",
+      texto: "Se inicia desde lo que queda. No desde la fuerza, sino desde la verdad.",
+      qs: [
+        "¿Qué estructura nueva nace después de la disolución?",
+        "¿Qué responsabilidad asumo ahora con más conciencia?"
+      ]
+    },
+    fijo: {
+      enfoque: "Sostener estructura mínima.",
+      texto: "Se sostiene lo esencial. Lo superfluo ya no responde.",
+      qs: [
+        "¿Qué estructura interna me mantiene en pie?",
+        "¿Qué peso ya no puedo cargar?"
+      ]
+    },
+    mutable: {
+      enfoque: "Soltar identidad.",
+      texto: "La forma se disuelve. La identidad se reconfigura.",
+      qs: [
+        "¿Qué versión de mí ya no soy?",
+        "¿Qué espacio dejo para lo nuevo?"
+      ]
+    }
+  },
+
+  primavera: {
+    cardinal: {
+      enfoque: "Inicio expansivo. Brote.",
+      texto: "La vida vuelve a empujar. Iniciar es atreverse a crecer.",
+      qs: [
+        "¿Qué me estoy permitiendo iniciar ahora?",
+        "¿Dónde necesito dar el primer paso sin garantías?"
+      ]
+    },
+    fijo: {
+      enfoque: "Consolidar crecimiento.",
+      texto: "Lo que brotó necesita raíz.",
+      qs: [
+        "¿Qué hábito o sistema debo sostener para crecer?",
+        "¿Dónde necesito paciencia en lugar de impulso?"
+      ]
+    },
+    mutable: {
+      enfoque: "Ajustar crecimiento.",
+      texto: "No todo brote debe continuar.",
+      qs: [
+        "¿Qué ajuste mejora mi proceso?",
+        "¿Qué debo podar para crecer mejor?"
+      ]
+    }
+  },
+
+  verano: {
+    cardinal: {
+      enfoque: "Inicio hacia la expresión.",
+      texto: "La energía busca mostrarse. Iniciar es exponerse.",
+      qs: [
+        "¿Qué inicio necesita visibilidad?",
+        "¿Qué estoy dispuesto a sostener frente a otros?"
+      ]
+    },
+    fijo: {
+      enfoque: "Sostener exposición.",
+      texto: "La luz revela tensiones. Sostener es atravesar la intensidad.",
+      qs: [
+        "¿Qué me exige consistencia ahora?",
+        "¿Dónde aparece el cansancio o la resistencia?"
+      ]
+    },
+    mutable: {
+      enfoque: "Regular intensidad.",
+      texto: "No todo se sostiene al mismo ritmo.",
+      qs: [
+        "¿Dónde necesito regular energía?",
+        "¿Qué aprendizaje me deja la exposición?"
+      ]
+    }
+  },
+
+  otono: {
+    cardinal: {
+      enfoque: "Inicio de evaluación.",
+      texto: "Se inicia la revisión del camino recorrido.",
+      qs: [
+        "¿Qué proceso entra ahora en cuestionamiento?",
+        "¿Qué merece ser observado con honestidad?"
+      ]
+    },
+    fijo: {
+      enfoque: "Sostener solo lo que vale.",
+      texto: "No todo merece continuar.",
+      qs: [
+        "¿Qué esfuerzo ya no tiene sentido?",
+        "¿Qué vínculo o sistema ya no responde?"
+      ]
+    },
+    mutable: {
+      enfoque: "Preparar el cierre.",
+      texto: "Se suelta para poder cruzar.",
+      qs: [
+        "¿Qué ya está listo para terminar?",
+        "¿Qué me preparo a dejar atrás?"
+      ]
+    }
   }
 };
 
 const MESO_ESPECIFICO = {
-  primavera: { apertura:"Se abre una nueva forma de vivir.", desarrollo:"Se ensayan nuevas estructuras.", evaluacion:"Se detecta qué estructuras sí y cuál no.", cierre:"Se consolidan cimientos antes del verano." },
-  verano:    { apertura:"Aumento de carga.", desarrollo:"Máxima exigencia.", evaluacion:"Se ve qué aguanta y qué no.", cierre:"Se ajusta el ritmo antes de bajar." },
-  otono:     { apertura:"Se percibe pérdida de eficiencia.", desarrollo:"Se hace evidente el desgaste.", evaluacion:"Se decide qué no pasará al invierno.", cierre:"Se empieza a soltar conscientemente." },
-  invierno:  { apertura:"Se abre el vacío.", desarrollo:"Se atraviesa la disolución.", evaluacion:"Se comprende qué identidad se soltó.", cierre:"Se gesta la dirección de la primavera." }
+  invierno: {
+    cardinal: {
+      enfoque: "Inicio desde el vacío. Reestructuración interna.",
+      texto: "Se inicia desde lo que queda. No desde la fuerza, sino desde la verdad.",
+      preguntas: [
+        "¿Qué estructura nueva nace después de la disolución?",
+        "¿Qué responsabilidad asumo ahora con más conciencia?"
+      ]
+    },
+    fijo: {
+      enfoque: "Sostener estructura mínima.",
+      texto: "Se sostiene lo esencial. Lo superfluo ya no responde.",
+      preguntas: [
+        "¿Qué estructura interna me mantiene en pie?",
+        "¿Qué peso ya no puedo cargar?"
+      ]
+    },
+    mutable: {
+      enfoque: "Soltar identidad.",
+      texto: "La forma se disuelve. La identidad se reconfigura.",
+      preguntas: [
+        "¿Qué versión de mí ya no soy?",
+        "¿Qué espacio dejo para lo nuevo?"
+      ]
+    }
+  },
+
+  primavera: {
+    cardinal: {
+      enfoque: "Inicio expansivo. Brote.",
+      texto: "La vida vuelve a empujar. Iniciar es atreverse a crecer.",
+      preguntas: [
+        "¿Qué me estoy permitiendo iniciar ahora?",
+        "¿Dónde necesito dar el primer paso sin garantías?"
+      ]
+    },
+    fijo: {
+      enfoque: "Consolidar crecimiento.",
+      texto: "Lo que brotó necesita raíz.",
+      preguntas: [
+        "¿Qué hábito o sistema debo sostener para crecer?",
+        "¿Dónde necesito paciencia en lugar de impulso?"
+      ]
+    },
+    mutable: {
+      enfoque: "Ajustar crecimiento.",
+      texto: "No todo brote debe continuar.",
+      preguntas: [
+        "¿Qué ajuste mejora mi proceso?",
+        "¿Qué debo podar para crecer mejor?"
+      ]
+    }
+  },
+
+  verano: {
+    cardinal: {
+      enfoque: "Inicio hacia la expresión.",
+      texto: "La energía busca mostrarse. Iniciar es exponerse.",
+      preguntas: [
+        "¿Qué inicio necesita visibilidad?",
+        "¿Qué estoy dispuesto a sostener frente a otros?"
+      ]
+    },
+    fijo: {
+      enfoque: "Sostener exposición.",
+      texto: "La luz revela tensiones. Sostener es atravesar la intensidad.",
+      preguntas: [
+        "¿Qué me exige consistencia ahora?",
+        "¿Dónde aparece el cansancio o la resistencia?"
+      ]
+    },
+    mutable: {
+      enfoque: "Regular intensidad.",
+      texto: "No todo se sostiene al mismo ritmo.",
+      preguntas: [
+        "¿Dónde necesito regular energía?",
+        "¿Qué aprendizaje me deja la exposición?"
+      ]
+    }
+  },
+
+  otono: {
+    cardinal: {
+      enfoque: "Inicio de evaluación.",
+      texto: "Se inicia la revisión del camino recorrido.",
+      preguntas: [
+        "¿Qué proceso entra ahora en cuestionamiento?",
+        "¿Qué merece ser observado con honestidad?"
+      ]
+    },
+    fijo: {
+      enfoque: "Sostener solo lo que vale.",
+      texto: "No todo merece continuar.",
+      preguntas: [
+        "¿Qué esfuerzo ya no tiene sentido?",
+        "¿Qué vínculo o sistema ya no responde?"
+      ]
+    },
+    mutable: {
+      enfoque: "Preparar el cierre.",
+      texto: "Se suelta para poder cruzar.",
+      preguntas: [
+        "¿Qué ya está listo para terminar?",
+        "¿Qué me preparo a dejar atrás?"
+      ]
+    }
+  }
 };
 
 const MICRO = {
@@ -356,6 +621,8 @@ const MICRO = {
     "¿Qué dejo ir sin culpa?"
   ]}
 };
+
+
 
 const UPCOMING = {
   astro: {
@@ -809,23 +1076,20 @@ if (closest) {
 
   const seasonKey = seasonKeyFromEventKey(prevEvent.key);
 
-  const stage1Start = addDaysLocal(prevEvent.date, 4);
-  const stage1End   = addDaysLocal(stage1Start, 20);
+  // --- Nuevo mesociclo: Cardinal (28) + Fijo (28) + Mutable (variable hasta nextEvent-4)
+  const cardinalStart = addDaysLocal(prevEvent.date, 4);
+  const cardinalEnd   = addDaysLocal(cardinalStart, 27); // 28 días total
 
-  const stage2Start = addDaysLocal(stage1Start, 21);
-  const stage2End   = addDaysLocal(stage2Start, 20);
+  const fijoStart     = addDaysLocal(cardinalStart, 28);
+  const fijoEnd       = addDaysLocal(fijoStart, 27);     // 28 días total
 
-  const stage3Start = addDaysLocal(stage1Start, 42);
-  const stage3End   = addDaysLocal(stage3Start, 20);
+  const mutableStart  = addDaysLocal(cardinalStart, 56);
+  const mutableEnd    = addDaysLocal(nextEvent.date, -4); // variable
 
-  const stage4Start = addDaysLocal(stage1Start, 63);
-  const stage4End   = addDaysLocal(nextEvent.date, -4);
-
-  let mesoKey = "cierre";
-  if(d >= stage1Start && d <= stage1End) mesoKey = "apertura";
-  else if(d >= stage2Start && d <= stage2End) mesoKey = "desarrollo";
-  else if(d >= stage3Start && d <= stage3End) mesoKey = "evaluacion";
-  else if(d >= stage4Start && d <= stage4End) mesoKey = "cierre";
+  let mesoKey = "mutable";
+  if (d >= cardinalStart && d <= cardinalEnd) mesoKey = "cardinal";
+  else if (d >= fijoStart && d <= fijoEnd)   mesoKey = "fijo";
+  else if (d >= mutableStart && d <= mutableEnd) mesoKey = "mutable";
 
   return { isTransition:false, seasonKey, mesoKey, nextEventName: nextEvent.name };
 }
@@ -836,10 +1100,17 @@ function getCellDateFromDayDelta(anchorLocalDate, dayDelta){
 
 function mesoLabel(key){
   return {
-    apertura: "Apertura",
-    desarrollo: "Desarrollo",
-    evaluacion: "Evaluación",
-    cierre: "Cierre"
+    cardinal: "Cardinal",
+    fijo: "Fijo",
+    mutable: "Mutable",
+  }[key] || key;
+}
+
+function mesoModalidadLabel(key){
+  return {
+    cardinal: "CARDINAL",
+    fijo: "FIJO",
+    mutable: "MUTABLE",
   }[key] || key;
 }
 
@@ -1028,6 +1299,7 @@ function renderMonthGrid(activeDayInMonth, anchorLocal){
     const dayDeltaCell = (CURRENT_MONTH_INDEX * 28) + (d - 1);
     const cellDate = getCellDateFromDayDelta(anchorLocal, dayDeltaCell);
     const astroCell = getAstroStateForDate(cellDate);
+    console.log(d, astroCell.mesoKey, astroCell.isTransition);
 
     if (!astroCell.error && !astroCell.isTransition) {
       const line = document.createElement("div");
@@ -1083,10 +1355,18 @@ function getTransitionKey(fromSeasonIdx){
 }
 
 function getMesoStageKey(dayDelta){
-  const dis = getDayInSeason(dayDelta);
-  if(dis >= 84) return null; // transition: no meso line
-  const stageIndex = Math.floor(dis / 21);
-  return ["apertura","desarrollo","evaluacion","cierre"][stageIndex];
+  const dis = getDayInSeason(dayDelta); // 0..90
+  // Semana de integración: NO hay línea mesociclo
+  if (dis >= 84) return null;
+
+  // Cardinal: 0..27 (28 días)
+  if (dis < 28) return "cardinal";
+
+  // Fijo: 28..55 (28 días)
+  if (dis < 56) return "fijo";
+
+  // Mutable: 56..83 (hasta antes de integración)
+  return "mutable";
 }
 
 function getMicroWeek(dayInMonth){
@@ -1123,9 +1403,25 @@ if (!mesoKey) {
     <div class="sub" style="margin-top:8px;"><b>Frase macrociclo:</b><br>${macro.phrase}</div>
 
     <div class="sub titleLine"><b>${mesoUni.label}</b></div>
-    <div class="sub" style="margin-top:6px;">${mesoCombined}</div>
-    <div class="sub" style="margin-top:10px;"><b>Pregunta guía:</b><br>${mesoUni.question}</div>
-    <div class="sub" style="margin-top:10px;"><b>Qué ocurre:</b><br>${mesoUni.occurs}</div>
+      ${(() => {
+        const uni = MESO_MODAL_UNI[mesoKey];
+        const spec = (MESO_MODAL_SEASON[seasonKey] || {})[mesoKey];
+
+        // 2 universales + 2 específicas (como pediste)
+        const qUni = (uni?.qs || []).slice(0, 2).map(q => `<li>${q}</li>`).join("");
+        const qSpec = (spec?.qs || []).slice(0, 2).map(q => `<li>${q}</li>`).join("");
+
+        return `
+          <div class="sub" style="margin-top:8px;"><b>Sentido universal</b><br>${uni?.sentido || ""}<br>${uni?.texto || ""}</div>
+          <div class="sub" style="margin-top:10px;"><b>Enfoque</b><br>${spec?.enfoque || ""}<br>${spec?.texto || ""}</div>
+
+          <div class="sub" style="margin-top:12px;"><b>Preguntas guía universales</b></div>
+          <ul>${qUni}</ul>
+
+          <div class="sub" style="margin-top:10px;"><b>Preguntas específicas</b></div>
+          <ul>${qSpec}</ul>
+        `;
+      })()}
 
     <div class="sub titleLine"><b>${micro.label}</b></div>
     <div class="sub" style="margin-top:6px;"><b>Frase microciclo:</b><br>${micro.phrase}</div>
@@ -1222,9 +1518,21 @@ function renderStandardPanelAstro(astro, dayInMonth, selectedLocal){
   const macro = MACRO[seasonKey];
 
   const mesoKey = astro.mesoKey;
-  const mesoUni = MESO_UNIVERSAL[mesoKey];
-  const mesoSpec = MESO_ESPECIFICO[seasonKey][mesoKey];
-  const mesoCombined = `${mesoUni.phrase} ${mesoSpec}`;
+  const mesoUni = MESO_UNIVERSAL[astro.mesoKey];
+  const mesoSpec = (MESO_ESPECIFICO[astro.seasonKey] || MESO_ESPECIFICO[seasonKey] || {})[astro.mesoKey];
+
+  const uni = MESO_MODAL_UNI[mesoKey] || mesoUni; // por si decides usar MESO_UNIVERSAL
+  const spec = ((MESO_MODAL_SEASON[seasonKey] || {})[mesoKey]) || mesoSpec || {};
+
+  const uniQs = (uni?.qs || uni?.preguntas || []).slice(0,2).map(q=>`<li>${q}</li>`).join("");
+  const specQs = (spec?.qs || spec?.preguntas || []).slice(0,2).map(q=>`<li>${q}</li>`).join("");
+
+  if(!mesoUni){
+    ctx.innerHTML = `<div class="sub">MesoKey desconocida: ${astro.mesoKey}</div>`;
+    return;
+  }
+
+  const mesoCombined = `${mesoUni.phrase} ${mesoSpec || ""}`.trim();
 
   const microWeek = Math.floor((dayInMonth - 1) / 7) + 1;
   const micro = MICRO[microWeek];
@@ -1236,11 +1544,28 @@ function renderStandardPanelAstro(astro, dayInMonth, selectedLocal){
     <div class="sub"><b>Qué se está trabajando:</b><br>${macro.working}</div>
     <div class="sub" style="margin-top:8px;"><b>Frase macrociclo:</b><br>${macro.phrase}</div>
 
+    
+
     <div class="k" style="margin-top:18px;">[MesoCiclo]</div>
-    <div class="sub titleLine season-${seasonKey}"><b>${mesoUni.label}</b></div>
-    <div class="sub" style="margin-top:6px;">${mesoCombined}</div>
-    <div class="sub" style="margin-top:10px;"><b>Pregunta guía:</b><br>${mesoUni.question}</div>
-    <div class="sub" style="margin-top:10px;"><b>Qué ocurre:</b><br>${mesoUni.occurs}</div>
+    <div class="sub mesoTitle meso-${mesoKey}"><b>${mesoUni.label}</b></div>
+
+    <div class="sub" style="margin-top:6px;">
+      <b>Sentido universal</b><br>
+      ${(uni?.sentido || "")}<br>
+      ${String(uni?.texto || "").replace(/\n/g,"<br>")}
+    </div>
+
+    <div class="sub" style="margin-top:10px;">
+      <b>Enfoque</b><br>
+      ${(spec?.enfoque || "")}<br>
+      ${String(spec?.texto || "").replace(/\n/g,"<br>")}
+    </div>
+
+    <div class="sub" style="margin-top:10px;"><b>Preguntas guía universales</b></div>
+    <ul>${uniQs}</ul>
+
+    <div class="sub" style="margin-top:10px;"><b>Preguntas específicas</b></div>
+    <ul>${specQs}</ul>
 
     <div class="k" style="margin-top:18px;">[MicroCiclo]</div>
     <div class="sub titleLine season-${seasonKey}"><b>${micro.label}</b></div>
