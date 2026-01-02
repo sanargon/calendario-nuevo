@@ -1123,6 +1123,32 @@ function isSaturdayNew(dayInMonth){
   return dayInMonth % 7 === 0;
 }
 
+function getMesoTransitionText(from, to) {
+  if (from === "cardinal" && to === "fijo") {
+    return {
+      line1: "Cardinal → Fijo",
+      line2: `Lo que iniciaste ahora pide constancia.
+              La energía deja de moverse por impulso
+              y comienza a probar si puede sostenerse en el tiempo.
+              <br><br>
+              👉 Empodera el compromiso, no la dispersión.`
+    };
+  }
+
+  if (from === "fijo" && to === "mutable") {
+    return {
+      line1: "Fijo → Mutable",
+      line2: `Lo que sostuviste se vuelve materia de aprendizaje.
+              La estructura se afloja para adaptarse
+              y prepararse para el próximo cambio.
+              <br><br>
+              👉 Empodera la adaptación, no el apego.`
+    };
+  }
+
+  return null;
+}
+
 // Decide qué mostrar en “Próximamente” (macro/meso) y (micro)
 function getUpcoming(selectedLocal, dayInMonth){
   const tomorrow = addDaysLocal(selectedLocal, 1);
@@ -1147,11 +1173,13 @@ function getUpcoming(selectedLocal, dayInMonth){
         astroToday.mesoKey && astroTomorrow.mesoKey &&
         astroToday.mesoKey !== astroTomorrow.mesoKey) {
 
+          const t = getMesoTransitionText(astroToday.mesoKey, astroTomorrow.mesoKey);
+
       primary = {
         type: "meso",
         title: "[Próximamente]",
-        line1: `${mesoLabel(astroToday.mesoKey)} → ${mesoLabel(astroTomorrow.mesoKey)}`,
-        line2: MESO_UNIVERSAL[astroTomorrow.mesoKey]?.phrase || ""
+        line1: t ? t.line1 : `${mesoLabel(astroToday.mesoKey)} → ${mesoLabel(astroTomorrow.mesoKey)}`,
+        line2: t ? t.line2 : (MESO_UNIVERSAL[astroTomorrow.mesoKey]?.phrase || "")
       };
     }
   }
